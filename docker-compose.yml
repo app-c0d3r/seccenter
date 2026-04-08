@@ -1,5 +1,5 @@
-# Docker Compose Konfiguration fuer SECCENTER Phase 1
-# Enthaelt drei Dienste: Datenbank, API-Middleware, Web-Oberflaeche
+# Docker Compose Konfiguration fuer SECCENTER Phase 2B
+# Contains four services: Database, API-Middleware, Web-UI, n8n Orchestrator
 
 
 services:
@@ -31,6 +31,8 @@ services:
     environment:
       - SECCENTER_DATABASE_URL=postgresql+asyncpg://cockpit_user:cockpit_pass@postgres-db:5432/security_cockpit
       - SECCENTER_CORS_ORIGINS=["http://localhost:3000"]
+      - SECCENTER_N8N_WEBHOOK_URL=http://n8n-orchestrator:5678/webhook/enrich
+      - SECCENTER_MIDDLEWARE_INTERNAL_URL=http://middleware-api:8000
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -49,6 +51,27 @@ services:
     networks:
       - cockpit-net
 
+  # n8n Workflow Orchestrator for threat intelligence enrichment
+  n8n-orchestrator:
+    image: n8nio/n8n:1.94.1
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://n8n-orchestrator:5678/
+      - N8N_USER_FOLDER=/home/node/.n8n
+      - VT_API_KEY=${VT_API_KEY:-}
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./infrastructure/n8n/workflows:/home/node/.n8n/workflows
+    depends_on:
+      - middleware-api
+    networks:
+      - cockpit-net
+
 # Netzwerk fuer die interne Kommunikation der Dienste
 networks:
   cockpit-net:
@@ -57,3 +80,4 @@ networks:
 # Persistente Volumes fuer Datenbankdaten
 volumes:
   pg_data:
+  n8n_data:
