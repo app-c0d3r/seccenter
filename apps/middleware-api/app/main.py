@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.db.connection import async_session_factory, engine
-from app.router import dlp, enrichment, sessions, uploads
+from app.router import callbacks, dlp, enrichment, sessions, uploads
 from app.services.dlp_classifier import dlp_classifier
 
 
@@ -53,6 +53,7 @@ app.include_router(sessions.router)
 app.include_router(uploads.router)
 app.include_router(dlp.router)
 app.include_router(enrichment.router)
+app.include_router(callbacks.router)
 
 
 @app.get("/api/health", tags=["health"])
