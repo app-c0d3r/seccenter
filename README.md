@@ -1,43 +1,43 @@
 # SECCENTER
 
-KI-gestütztes Cyber Security Cockpit für SOC-Teams. Analysten können unstrukturierte Daten (PDFs, CSVs, Tickets) hochladen, sicherheitsrelevante Assets (IPs, Domains, Hashes) extrahieren, klassifizieren und mit Threat-Intelligence-Diensten anreichern lassen.
+An AI-powered Cyber Security Cockpit for SOC teams. Analysts can upload unstructured data (PDFs, CSVs, tickets), extract security-relevant assets (IPs, domains, hashes), classify them, and enrich them with threat intelligence services.
 
 ## Status
 
-**Initialisierungsphase** — Architektur dokumentiert, Implementierung folgt in Phase 1.
+**Initialization phase** — architecture documented, implementation starts in Phase 1.
 
 ## Stack
 
-| Schicht | Technologie |
+| Layer | Technology |
 |---|---|
 | Frontend | React · Zustand · Tailwind · TanStack Table |
-| Middleware | FastAPI oder Node.js |
-| KI-Agent | LangGraph |
-| Datenbank | PostgreSQL + pgvector · FalkorDB |
-| Orchestrierung | n8n |
-| Infrastruktur | Docker · docker-compose |
+| Middleware | FastAPI or Node.js |
+| AI Agent | LangGraph |
+| Database | PostgreSQL + pgvector · FalkorDB |
+| Orchestration | n8n |
+| Infrastructure | Docker · docker-compose |
 
-## Schnellstart
+## Quick Start
 
 ```bash
 docker-compose up
 ```
 
-Startet alle 6 Container: `postgres-db`, `graph-db`, `middleware-api`, `n8n-orchestrator`, `web-ui`, `ai-agent`.
+Starts all 6 containers: `postgres-db`, `graph-db`, `middleware-api`, `n8n-orchestrator`, `web-ui`, `ai-agent`.
 
-## Architektur
+## Architecture
 
 ```
-/apps/web-ui         → React · Zustand · Tailwind (3-Spalten-Layout)
-/apps/middleware     → FastAPI/Node.js · DLP-Logik · WebSocket · n8n-Callbacks
-/apps/agent          → LangGraph-Service für KI-Entscheidungslogik
-/infrastructure      → Docker · n8n-Workflow-JSONs (IaC)
+/apps/web-ui         → React · Zustand · Tailwind (3-column layout)
+/apps/middleware     → FastAPI/Node.js · DLP logic · WebSocket · n8n callbacks
+/apps/agent          → LangGraph service for AI decision logic
+/infrastructure      → Docker · n8n workflow JSONs (IaC)
 ```
 
-**Kern-Workflow:** Upload → Asset-Extraktion → DLP-Check → Async-Enrichment (n8n) → KI-Report → Canvas-Editing → Speichern
+**Core workflow:** Upload → Asset extraction → DLP check → Async enrichment (n8n) → AI report → Canvas editing → Save
 
-## Dokumentation
+## Documentation
 
-- [`docs/architecture.md`](docs/architecture.md) — Architektur, DLP-Modell, LangGraph-Strategie
-- [`docs/master-doc.md`](docs/master-doc.md) — Anforderungen, Datenmodelle, Roadmap
-- [`docs/Lastenheft.md`](docs/Lastenheft.md) — Vollständiges Lastenheft
+- [`docs/architecture.md`](docs/architecture.md) — Architecture, DLP model, LangGraph strategy
+- [`docs/master-doc.md`](docs/master-doc.md) — Requirements, data models, roadmap
+- [`docs/Lastenheft.md`](docs/Lastenheft.md) — Full requirements specification
