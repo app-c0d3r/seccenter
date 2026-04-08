@@ -77,40 +77,40 @@ def extract_iocs(text: str) -> list[dict[str, str]]:
         return []
 
     # Schritt 1: Defanging des Eingabetexts
-    bereinigte_text = _defang(text)
+    defanged_text = _defang(text)
 
     # Bereits gematchte Positionen (verhindert Substring-Ueberschneidungen)
-    belegte_positionen: set[int] = set()
+    matched_positions: set[int] = set()
 
     # Ergebnisliste und Deduplizierungs-Set
-    ergebnisse: list[dict[str, str]] = []
-    gesehene_werte: set[tuple[str, str]] = set()
+    results: list[dict[str, str]] = []
+    seen_values: set[tuple[str, str]] = set()
 
-    for ioc_type, muster in _COMPILED:
-        for treffer in muster.finditer(bereinigte_text):
-            start, ende = treffer.start(), treffer.end()
-            treffer_positionen = set(range(start, ende))
+    for ioc_type, pattern in _COMPILED:
+        for match in pattern.finditer(defanged_text):
+            start, end = match.start(), match.end()
+            match_positions = set(range(start, end))
 
             # Ueberspringe Treffer die bereits durch laengere Matches abgedeckt sind
-            if treffer_positionen & belegte_positionen:
+            if match_positions & matched_positions:
                 continue
 
-            wert = treffer.group()
+            value = match.group()
 
             # Validierung je nach IOC-Typ
-            if ioc_type == "IP_ADDRESS" and not _validate_ip(wert):
+            if ioc_type == "IP_ADDRESS" and not _validate_ip(value):
                 continue
-            if ioc_type == "DOMAIN" and not _validate_domain(wert):
+            if ioc_type == "DOMAIN" and not _validate_domain(value):
                 continue
 
             # Deduplizierung
-            schluessel = (wert, ioc_type)
-            if schluessel in gesehene_werte:
+            key = (value, ioc_type)
+            if key in seen_values:
                 continue
 
             # Positionen als belegt markieren
-            belegte_positionen |= treffer_positionen
-            gesehene_werte.add(schluessel)
-            ergebnisse.append({"type": ioc_type, "value": wert})
+            matched_positions |= match_positions
+            seen_values.add(key)
+            results.append({"type": ioc_type, "value": value})
 
-    return ergebnisse
+    return results
