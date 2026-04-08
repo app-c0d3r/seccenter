@@ -19,7 +19,15 @@ interface SessionState {
   /** Fuegt Assets zu einer bestehenden Session hinzu */
   addAssetsToSession: (sessionId: string, assets: AnalyzedAsset[]) => void;
   /** Aktualisiert den Status eines einzelnen Assets */
-  updateAssetStatus: (sessionId: string, assetId: string, status: AssetStatus) => void;
+  updateAssetStatus: (
+    sessionId: string,
+    assetId: string,
+    status: AssetStatus,
+  ) => void;
+  /** Mark assets as PROCESSING after successful enrich dispatch */
+  markAssetsProcessing: (sessionId: string, assetIds: string[]) => void;
+  /** Replace all assets for a session (polling sync from backend) */
+  refreshSessionAssets: (sessionId: string, assets: AnalyzedAsset[]) => void;
 }
 
 /** Globaler Zustand-Store fuer Sessions */
@@ -56,5 +64,25 @@ export const useSessionStore = create<SessionState>()(
           }
         }
       }),
-  }))
+
+    markAssetsProcessing: (sessionId, assetIds) =>
+      set((state) => {
+        const session = state.sessions[sessionId];
+        if (session) {
+          for (const asset of session.assets) {
+            if (assetIds.includes(asset.id)) {
+              asset.status = "PROCESSING";
+            }
+          }
+        }
+      }),
+
+    refreshSessionAssets: (sessionId, assets) =>
+      set((state) => {
+        const session = state.sessions[sessionId];
+        if (session) {
+          session.assets = assets;
+        }
+      }),
+  })),
 );
