@@ -6,11 +6,11 @@ from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
-class Basis(DeclarativeBase):
+class Base(DeclarativeBase):
     """Basis-Klasse fuer alle ORM-Modelle."""
 
 
-class SitzungsModell(Basis):
+class SessionModel(Base):
     """Datenbanktabelle fuer Analyse-Sitzungen."""
 
     __tablename__ = "sessions"
@@ -18,7 +18,7 @@ class SitzungsModell(Basis):
     # Primaerschluessel als ULID (26 Zeichen)
     id: Mapped[str] = mapped_column(String(26), primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    erstellt_am: Mapped[DateTime] = mapped_column(
+    created_at: Mapped[DateTime] = mapped_column(
         "created_at",
         DateTime(timezone=True),
         server_default=func.now(),
@@ -26,12 +26,12 @@ class SitzungsModell(Basis):
     )
 
     # Beziehung zu Assets (Kaskaden-Loeschung)
-    assets: Mapped[list["AssetModell"]] = relationship(
-        back_populates="sitzung", cascade="all, delete-orphan"
+    assets: Mapped[list["AssetModel"]] = relationship(
+        back_populates="session", cascade="all, delete-orphan"
     )
 
 
-class AssetModell(Basis):
+class AssetModel(Base):
     """Datenbanktabelle fuer gefundene Assets (IPs, Domains, Hashes)."""
 
     __tablename__ = "assets"
@@ -73,7 +73,7 @@ class AssetModell(Basis):
         nullable=False,
     )
 
-    erstellt_am: Mapped[DateTime] = mapped_column(
+    created_at: Mapped[DateTime] = mapped_column(
         "created_at",
         DateTime(timezone=True),
         server_default=func.now(),
@@ -81,7 +81,7 @@ class AssetModell(Basis):
     )
 
     # Beziehung zur uebergeordneten Sitzung
-    sitzung: Mapped["SitzungsModell"] = relationship(back_populates="assets")
+    session: Mapped["SessionModel"] = relationship(back_populates="assets")
 
     # Index fuer effiziente Abfragen nach Sitzung
     __table_args__ = (

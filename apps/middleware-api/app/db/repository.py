@@ -4,86 +4,70 @@ from python_ulid import ULID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AssetModell, SitzungsModell
+from app.db.models import AssetModel, SessionModel
 
 
-async def sitzung_erstellen(db: AsyncSession, name: str) -> SitzungsModell:
+async def create_session(db: AsyncSession, name: str) -> SessionModel:
     """Erstellt eine neue Analyse-Sitzung mit generierter ULID."""
-    neue_sitzung = SitzungsModell(
+    new_session = SessionModel(
         id=str(ULID()),
         name=name,
     )
-    db.add(neue_sitzung)
+    db.add(new_session)
     await db.commit()
-    await db.refresh(neue_sitzung)
-    return neue_sitzung
+    await db.refresh(new_session)
+    return new_session
 
 
-# Alias fuer englische API-Kompatibilitaet
-create_session = sitzung_erstellen
-
-
-async def sitzungen_auflisten(db: AsyncSession) -> list[SitzungsModell]:
+async def list_sessions(db: AsyncSession) -> list[SessionModel]:
     """Gibt alle Sitzungen absteigend nach Erstellungsdatum zurueck."""
-    ergebnis = await db.execute(
-        select(SitzungsModell).order_by(SitzungsModell.erstellt_am.desc())
+    result = await db.execute(
+        select(SessionModel).order_by(SessionModel.created_at.desc())
     )
-    return list(ergebnis.scalars().all())
+    return list(result.scalars().all())
 
 
-# Alias
-list_sessions = sitzungen_auflisten
-
-
-async def sitzung_abrufen(
-    db: AsyncSession, sitzungs_id: str
-) -> SitzungsModell | None:
+async def get_session(
+    db: AsyncSession, session_id: str
+) -> SessionModel | None:
     """Gibt eine Sitzung anhand ihrer ID zurueck oder None."""
-    ergebnis = await db.execute(
-        select(SitzungsModell).where(SitzungsModell.id == sitzungs_id)
+    result = await db.execute(
+        select(SessionModel).where(SessionModel.id == session_id)
     )
-    return ergebnis.scalar_one_or_none()
+    return result.scalar_one_or_none()
 
 
-# Alias
-get_session = sitzung_abrufen
-
-
-async def assets_erstellen(
-    db: AsyncSession, sitzungs_id: str, assets: list[dict]
-) -> list[AssetModell]:
+async def create_assets(
+    db: AsyncSession, session_id: str, assets: list[dict]
+) -> list[AssetModel]:
     """Erstellt mehrere Assets fuer eine Sitzung auf einmal (Bulk-Insert)."""
-    neue_assets: list[AssetModell] = []
-    for asset_daten in assets:
-        neues_asset = AssetModell(
+    new_assets: list[AssetModel] = []
+    for asset_data in assets:
+        new_asset = AssetModel(
             id=str(ULID()),
-            session_id=sitzungs_id,
-            **asset_daten,
+            session_id=session_id,
+            **asset_data,
         )
-        db.add(neues_asset)
-        neue_assets.append(neues_asset)
+        db.add(new_asset)
+        new_assets.append(new_asset)
 
     await db.commit()
 
     # Alle Assets aktualisieren (server-seitige Standardwerte laden)
-    for asset in neue_assets:
+    for asset in new_assets:
         await db.refresh(asset)
 
-    return neue_assets
+    return new_assets
 
 
-# Alias
-create_assets = assets_erstellen
-
-
-async def asset_status_aktualisieren(
+async def update_asset_status(
     db: AsyncSession, asset_id: str, status: str
-) -> AssetModell | None:
+) -> AssetModel | None:
     """Aktualisiert den Status eines Assets und gibt das aktualisierte Asset zurueck."""
-    ergebnis = await db.execute(
-        select(AssetModell).where(AssetModell.id == asset_id)
+    result = await db.execute(
+        select(AssetModel).where(AssetModel.id == asset_id)
     )
-    asset = ergebnis.scalar_one_or_none()
+    asset = result.scalar_one_or_none()
 
     if asset is None:
         return None
@@ -92,7 +76,3 @@ async def asset_status_aktualisieren(
     await db.commit()
     await db.refresh(asset)
     return asset
-
-
-# Alias
-update_asset_status = asset_status_aktualisieren

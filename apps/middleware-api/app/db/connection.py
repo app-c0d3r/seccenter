@@ -4,18 +4,18 @@ from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.config import einstellungen
+from app.core.config import settings
 
 # Async-Engine erstellen
-datenbank_engine = create_async_engine(
-    einstellungen.database_url,
+engine = create_async_engine(
+    settings.database_url,
     echo=False,  # SQL-Logging deaktiviert (fuer Produktion)
     pool_pre_ping=True,  # Verbindungspruefung vor jeder Nutzung
 )
 
 # Session-Fabrik konfigurieren
-AsyncSitzungsFabrik = async_sessionmaker(
-    bind=datenbank_engine,
+async_session_factory = async_sessionmaker(
+    bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
@@ -23,5 +23,5 @@ AsyncSitzungsFabrik = async_sessionmaker(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI-Dependency: liefert eine Datenbankverbindung und schliesst sie danach."""
-    async with AsyncSitzungsFabrik() as sitzung:
-        yield sitzung
+    async with async_session_factory() as session:
+        yield session

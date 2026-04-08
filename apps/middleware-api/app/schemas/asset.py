@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class AssetTyp(str, Enum):
+class AssetType(str, Enum):
     """Moegliche Asset-Typen im Security Cockpit."""
 
     IP_ADDRESS = "IP_ADDRESS"
@@ -14,10 +14,6 @@ class AssetTyp(str, Enum):
     FILE_HASH_MD5 = "FILE_HASH_MD5"
     FILE_HASH_SHA1 = "FILE_HASH_SHA1"
     FILE_HASH_SHA256 = "FILE_HASH_SHA256"
-
-
-# Alias fuer englische Kompatibilitaet
-AssetType = AssetTyp
 
 
 class AssetStatus(str, Enum):
@@ -28,38 +24,26 @@ class AssetStatus(str, Enum):
     IGNORED = "IGNORED"
 
 
-class AssetAntwort(BaseModel):
+class AssetResponse(BaseModel):
     """Antwort-Schema fuer ein einzelnes Asset."""
 
     id: str
     session_id: str
     value: str
-    type: AssetTyp
+    type: AssetType
     status: AssetStatus
     created_at: datetime
 
     model_config = {"from_attributes": True}
 
 
-# Alias
-AssetResponse = AssetAntwort
-
-
-class AssetStatusAktualisierung(BaseModel):
+class AssetStatusUpdate(BaseModel):
     """Anfrage-Schema fuer Status-Aenderung eines Assets."""
 
     status: AssetStatus
 
 
-# Alias
-AssetStatusUpdate = AssetStatusAktualisierung
-
-
-class UploadAntwort(BaseModel):
+class UploadResponse(BaseModel):
     """Antwort-Schema nach einem Datei-Upload."""
 
-    assets: list[AssetAntwort]
-
-
-# Alias
-UploadResponse = UploadAntwort
+    assets: list[AssetResponse]
