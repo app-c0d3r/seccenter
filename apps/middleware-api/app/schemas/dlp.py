@@ -20,6 +20,12 @@ class InternalNetworkResponse(BaseModel):
     label: str | None
     created_at: datetime
 
+    @field_validator("cidr", mode="before")
+    @classmethod
+    def cidr_to_str(cls, v: object) -> str:
+        """Convert IPv4Network/IPv6Network from DB to string."""
+        return str(v)
+
     model_config = {"from_attributes": True}
 
 

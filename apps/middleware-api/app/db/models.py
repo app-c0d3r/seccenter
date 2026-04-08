@@ -3,6 +3,7 @@
 import enum
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
+from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -99,7 +100,7 @@ class InternalNetworkModel(Base):
     __tablename__ = "internal_networks"
 
     id: Mapped[str] = mapped_column(String(26), primary_key=True)
-    cidr: Mapped[str] = mapped_column(String, nullable=False)
+    cidr: Mapped[str] = mapped_column(CIDR, nullable=False)
     label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(
         "created_at",
