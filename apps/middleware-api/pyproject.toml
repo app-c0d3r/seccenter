@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "middleware-api"
+version = "0.1.0"
+description = "SECCENTER Middleware API – FastAPI Backend"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+# Asynchrone Tests automatisch behandeln
+asyncio_mode = "auto"
+testpaths = ["tests"]
