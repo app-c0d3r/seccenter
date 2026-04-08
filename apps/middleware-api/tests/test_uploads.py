@@ -3,17 +3,7 @@
 import io
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
-from app.main import app
-
-
-@pytest.fixture
-async def client():
-    """Test-HTTP-Client mit ASGI-Transport fuer direkten App-Zugriff."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
+from httpx import AsyncClient
 
 
 @pytest.fixture
@@ -66,7 +56,6 @@ async def test_upload_invalid_session(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_upload_file_too_large(client: AsyncClient, session_id: str) -> None:
     """Prueft ob eine zu grosse Datei einen 413-Fehler ausloest."""
-    # 11 MB Datei erstellen (ueberschreitet Standard-Limit von 10 MB)
     large_content = b"8.8.8.8 " * (11 * 1024 * 1024 // 8)
     file = io.BytesIO(large_content)
     response = await client.post(

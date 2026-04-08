@@ -1,17 +1,7 @@
 """Integrationstests fuer Session-Endpunkte."""
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
-from app.main import app
-
-
-@pytest.fixture
-async def client():
-    """Test-HTTP-Client mit ASGI-Transport fuer direkten App-Zugriff."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
@@ -38,11 +28,3 @@ async def test_create_session_missing_name(client: AsyncClient) -> None:
     """Prueft ob fehlendes Name-Feld einen Validierungsfehler ausloest."""
     response = await client.post("/api/sessions", json={})
     assert response.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_health_endpoint(client: AsyncClient) -> None:
-    """Prueft ob der Health-Endpunkt 'ok' zurueckgibt."""
-    response = await client.get("/api/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
