@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Stack:** React + Zustand + Tailwind (web-ui) · FastAPI oder Node.js (middleware) · LangGraph (ai-agent) · PostgreSQL + pgvector · FalkorDB · n8n
 - **Start:** `docker-compose up` (startet alle 6 Container)
 - **Build/Test/Lint:** Noch nicht definiert — werden in Phase 1 (Foundation & MVP) festgelegt
-
+- **CODE and COMMENTs** write Code and Comments always in english only in every file 
 ## Architektur
 
 Das System ist eine Docker-basierte Microservices-Architektur im Monorepo:
@@ -50,13 +50,13 @@ Upload → Asset-Extraktion → Staging/Dedupe → **DLP-Check (deterministisch)
 
 ## Wichtige Docs
 
-| Datei | Inhalt |
-|---|---|
-| `docs/architecture.md` | Vollständige Architektur, DLP-Modell, LangGraph-Strategie |
-| `docs/master-doc.md` | Anforderungen, Datenmodelle, Roadmap |
-| `docs/control-center-ui.md` | `AssetStatus`-Enum, `AnalyzedAsset`-Interface |
-| `docs/output-schemata.md` | Report-Output-Schema `{header, body, foot}` |
-| `docs/repo-struct.md` | Geplante Verzeichnisstruktur |
+| Datei                       | Inhalt                                                    |
+| --------------------------- | --------------------------------------------------------- |
+| `docs/architecture.md`      | Vollständige Architektur, DLP-Modell, LangGraph-Strategie |
+| `docs/master-doc.md`        | Anforderungen, Datenmodelle, Roadmap                      |
+| `docs/control-center-ui.md` | `AssetStatus`-Enum, `AnalyzedAsset`-Interface             |
+| `docs/output-schemata.md`   | Report-Output-Schema `{header, body, foot}`               |
+| `docs/repo-struct.md`       | Geplante Verzeichnisstruktur                              |
 
 ## Coding-Regeln (IMMER einhalten)
 
