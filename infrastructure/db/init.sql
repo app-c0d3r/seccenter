@@ -1,4 +1,4 @@
--- PostgreSQL Initialisierungsschema fuer SECCENTER Phase 1
+-- PostgreSQL Initialisierungsschema fuer SECCENTER Phase 2A
 -- Erstellt die Datenbankerweiterungen, Typen und Tabellen
 
 
@@ -18,9 +18,13 @@ CREATE TYPE asset_type AS ENUM (
     'FILE_HASH_SHA256'
 );
 
--- Aufzaehlungstyp fuer Bearbeitungsstatus eines Assets
+-- Aufzaehlungstyp fuer Bearbeitungsstatus eines Assets (vollstaendiger Lifecycle)
 CREATE TYPE asset_status AS ENUM (
     'PENDING',
+    'INTERNAL',
+    'PROCESSING',
+    'ENRICHED',
+    'CRITICAL',
     'CONFIRMED',
     'IGNORED'
 );
@@ -37,3 +41,23 @@ CREATE TABLE assets (
 
 -- Index fuer schnelle Suche nach Sitzungs-ID
 CREATE INDEX idx_assets_session ON assets(session_id);
+
+-- DLP: Interne Netzwerke (CIDR-Bloecke)
+CREATE TABLE internal_networks (
+    id         CHAR(26)     PRIMARY KEY,
+    cidr       CIDR         NOT NULL,
+    label      VARCHAR(255),
+    created_at TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX idx_internal_networks_cidr ON internal_networks(cidr);
+
+-- DLP: Interne Domains
+CREATE TABLE internal_domains (
+    id         CHAR(26)     PRIMARY KEY,
+    domain     VARCHAR(255) NOT NULL,
+    label      VARCHAR(255),
+    created_at TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX idx_internal_domains_domain ON internal_domains(domain);
