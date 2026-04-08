@@ -2,8 +2,8 @@
 
 import enum
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
-from sqlalchemy.dialects.postgresql import CIDR
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func, text
+from sqlalchemy.dialects.postgresql import ARRAY, CIDR, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -85,6 +85,11 @@ class AssetModel(Base):
         nullable=False,
     )
 
+    # Threat intelligence results from n8n enrichment pipeline
+    enrichment_data: Mapped[dict] = mapped_column(
+        JSONB, server_default=text("'{}'::jsonb"), nullable=False
+    )
+
     # Beziehung zur uebergeordneten Sitzung
     session: Mapped["SessionModel"] = relationship(back_populates="assets")
 
@@ -123,4 +128,30 @@ class InternalDomainModel(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
+    )
+
+
+class EnrichmentBatchModel(Base):
+    """Database table for enrichment batch tracking."""
+
+    __tablename__ = "enrichment_batches"
+
+    id: Mapped[str] = mapped_column(String(26), primary_key=True)
+    session_id: Mapped[str] = mapped_column(
+        String(26), ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False
+    )
+    asset_ids: Mapped[list[str]] = mapped_column(ARRAY(String(26)), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), server_default="DISPATCHED", nullable=False
+    )
+    dispatched_at: Mapped[DateTime] = mapped_column(
+        "dispatched_at",
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    completed_at: Mapped[DateTime | None] = mapped_column(
+        "completed_at",
+        DateTime(timezone=True),
+        nullable=True,
     )

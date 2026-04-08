@@ -61,3 +61,17 @@ CREATE TABLE internal_domains (
 );
 
 CREATE UNIQUE INDEX idx_internal_domains_domain ON internal_domains(domain);
+
+-- Phase 2B: Enrichment data storage
+ALTER TABLE assets ADD COLUMN enrichment_data JSONB DEFAULT '{}'::jsonb;
+
+-- Phase 2B: Batch tracking for n8n dispatch
+CREATE TABLE enrichment_batches (
+    id            CHAR(26) PRIMARY KEY,
+    session_id    CHAR(26) REFERENCES sessions(id) ON DELETE CASCADE,
+    asset_ids     CHAR(26)[] NOT NULL,
+    status        VARCHAR(20) DEFAULT 'DISPATCHED'
+                  CHECK (status IN ('DISPATCHED', 'COMPLETED', 'PARTIAL', 'FAILED')),
+    dispatched_at TIMESTAMPTZ DEFAULT NOW(),
+    completed_at  TIMESTAMPTZ
+);
