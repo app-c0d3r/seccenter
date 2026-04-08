@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 import { useSessionStore } from "@/store/sessionStore";
+import { useShallow } from "zustand/react/shallow";
 import { apiClient } from "@/api/apiClient";
 import type { AnalyzedAsset, AssetStatus } from "@/types";
 import {
@@ -37,11 +38,11 @@ export function AssetTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { activeSessionId, sessions, updateAssetStatus } = useSessionStore(
-    (state) => ({
+    useShallow((state) => ({
       activeSessionId: state.activeSessionId,
       sessions: state.sessions,
       updateAssetStatus: state.updateAssetStatus,
-    }),
+    })),
   );
 
   // Assets der aktiven Session ermitteln

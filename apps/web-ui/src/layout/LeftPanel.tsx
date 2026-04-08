@@ -3,6 +3,7 @@
  */
 import { useNavigate } from "react-router-dom";
 import { useSessionStore } from "@/store/sessionStore";
+import { useShallow } from "zustand/react/shallow";
 import { apiClient } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,15 +11,18 @@ import { cn } from "@/lib/utils";
 /** Linkes Seiten-Panel mit Session-Liste und Neu-Session-Schaltflaeche */
 export function LeftPanel() {
   const navigate = useNavigate();
-  const { sessions, activeSessionId, addSession } = useSessionStore((state) => ({
-    sessions: state.sessions,
-    activeSessionId: state.activeSessionId,
-    addSession: state.addSession,
-  }));
+  const { sessions, activeSessionId, addSession } = useSessionStore(
+    useShallow((state) => ({
+      sessions: state.sessions,
+      activeSessionId: state.activeSessionId,
+      addSession: state.addSession,
+    })),
+  );
 
   // Sessions nach Erstellungsdatum absteigend sortieren
   const sortedSessions = Object.values(sessions).sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
   /** Neue Session anlegen und dorthin navigieren */
@@ -55,7 +59,8 @@ export function LeftPanel() {
             onClick={() => navigate(`/sessions/${session.id}`)}
             className={cn(
               "mb-1 w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted",
-              session.id === activeSessionId && "bg-primary text-primary-foreground hover:bg-primary/90"
+              session.id === activeSessionId &&
+                "bg-primary text-primary-foreground hover:bg-primary/90",
             )}
           >
             <span className="block truncate font-medium">{session.name}</span>
@@ -64,7 +69,7 @@ export function LeftPanel() {
                 "block truncate text-[10px]",
                 session.id === activeSessionId
                   ? "text-primary-foreground/70"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground",
               )}
             >
               {new Date(session.created_at).toLocaleDateString()}

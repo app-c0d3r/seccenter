@@ -4,6 +4,7 @@
  */
 import { useRef, useState } from "react";
 import { useSessionStore } from "@/store/sessionStore";
+import { useShallow } from "zustand/react/shallow";
 import { apiClient } from "@/api/apiClient";
 import { cn } from "@/lib/utils";
 
@@ -11,11 +12,7 @@ import { cn } from "@/lib/utils";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /** Erlaubte MIME-Typen fuer den Upload */
-const ACCEPTED_TYPES = [
-  "text/plain",
-  "text/csv",
-  "application/pdf",
-];
+const ACCEPTED_TYPES = ["text/plain", "text/csv", "application/pdf"];
 
 /** Upload-Bereich mit Drag-and-Drop Unterstuetzung */
 export function UploadZone() {
@@ -24,17 +21,24 @@ export function UploadZone() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { activeSessionId, addAssetsToSession } = useSessionStore((state) => ({
-    activeSessionId: state.activeSessionId,
-    addAssetsToSession: state.addAssetsToSession,
-  }));
+  const { activeSessionId, addAssetsToSession } = useSessionStore(
+    useShallow((state) => ({
+      activeSessionId: state.activeSessionId,
+      addAssetsToSession: state.addAssetsToSession,
+    })),
+  );
 
   /** Validiert die Datei auf Typ und Groesse */
   function validateFile(file: File): string | null {
     const erlaubteEndungen = [".txt", ".csv", ".log", ".pdf"];
-    const dateiendung = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+    const dateiendung = file.name
+      .toLowerCase()
+      .slice(file.name.lastIndexOf("."));
 
-    if (!erlaubteEndungen.includes(dateiendung) && !ACCEPTED_TYPES.includes(file.type)) {
+    if (
+      !erlaubteEndungen.includes(dateiendung) &&
+      !ACCEPTED_TYPES.includes(file.type)
+    ) {
       return "Nicht unterstuetzter Dateityp. Erlaubt: TXT, CSV, LOG, PDF.";
     }
     if (file.size > MAX_FILE_SIZE) {
@@ -46,7 +50,9 @@ export function UploadZone() {
   /** Verarbeitet eine ausgewaehlte Datei und laedt sie hoch */
   async function handleFile(file: File) {
     if (!activeSessionId) {
-      setErrorMessage("Keine aktive Session. Bitte zuerst eine Session erstellen.");
+      setErrorMessage(
+        "Keine aktive Session. Bitte zuerst eine Session erstellen.",
+      );
       return;
     }
 
@@ -124,15 +130,21 @@ export function UploadZone() {
           isDragging
             ? "border-primary bg-primary/5"
             : "border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/30",
-          isUploading && "pointer-events-none opacity-60"
+          isUploading && "pointer-events-none opacity-60",
         )}
       >
         {isUploading ? (
-          <p className="text-sm font-medium text-muted-foreground">Extracting IOCs...</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            Extracting IOCs...
+          </p>
         ) : (
           <>
-            <p className="text-sm font-medium">Drop file here or click to upload</p>
-            <p className="mt-1 text-xs text-muted-foreground">TXT, CSV, PDF — max 10 MB</p>
+            <p className="text-sm font-medium">
+              Drop file here or click to upload
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              TXT, CSV, PDF — max 10 MB
+            </p>
           </>
         )}
       </div>
