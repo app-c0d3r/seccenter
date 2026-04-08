@@ -26,6 +26,9 @@ coverage/
 
 # project folder
 .claude/*
+.claude
 .env
 settings.json
 CLAUDE.md
+docs/*
+.gitignore
