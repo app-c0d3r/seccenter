@@ -7,13 +7,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.db.connection import engine
+from app.db.connection import async_session_factory, engine
 from app.router import dlp, sessions, uploads
+from app.services.dlp_classifier import dlp_classifier
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startet und beendet die Datenbankverbindung mit der App."""
+    # Load DLP rules into memory at startup
+    async with async_session_factory() as db:
+        await dlp_classifier.load(db)
     yield
     # Datenbankverbindungen beim Herunterfahren schliessen
     await engine.dispose()

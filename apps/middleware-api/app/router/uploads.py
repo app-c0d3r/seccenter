@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.db.connection import get_db
 from app.db import repository
 from app.schemas.asset import UploadResponse
+from app.services.dlp_classifier import DlpClassifier, get_dlp_classifier
 from app.services.ioc_extractor import extract_iocs
 
 # Router teilt den Praefix mit dem Sessions-Router
@@ -18,6 +19,7 @@ async def upload_file(
     session_id: str,
     file: UploadFile,
     db: AsyncSession = Depends(get_db),
+    dlp: DlpClassifier = Depends(get_dlp_classifier),
 ) -> UploadResponse:
     """
     Laedt eine Textdatei hoch und extrahiert IOCs daraus.
@@ -44,6 +46,7 @@ async def upload_file(
     # Schritt 3: UTF-8 dekodieren und IOCs extrahieren
     text = content_bytes.decode("utf-8", errors="replace")
     iocs = extract_iocs(text)
+    iocs = dlp.classify(iocs)
 
     # Schritt 4: Assets in der Datenbank anlegen (leer wenn keine IOCs gefunden)
     if iocs:
