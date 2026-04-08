@@ -1,8 +1,6 @@
 -- PostgreSQL Initialisierungsschema fuer SECCENTER Phase 1
 -- Erstellt die Datenbankerweiterungen, Typen und Tabellen
 
--- Erweiterung fuer Vektordatenverarbeitung laden
-CREATE EXTENSION IF NOT EXISTS "pgvector";
 
 -- Tabelle fuer Analyse-Sitzungen
 CREATE TABLE sessions (

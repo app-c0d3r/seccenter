@@ -9,8 +9,8 @@ from app.core.config import settings
 # Async-Engine erstellen
 engine = create_async_engine(
     settings.database_url,
-    echo=False,  # SQL-Logging deaktiviert (fuer Produktion)
-    pool_pre_ping=True,  # Verbindungspruefung vor jeder Nutzung
+    echo=False,
+    pool_pre_ping=True,
 )
 
 # Session-Fabrik konfigurieren

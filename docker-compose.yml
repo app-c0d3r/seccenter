@@ -1,12 +1,11 @@
 # Docker Compose Konfiguration fuer SECCENTER Phase 1
 # Enthaelt drei Dienste: Datenbank, API-Middleware, Web-Oberflaeche
 
-version: '3.8'
 
 services:
-  # PostgreSQL-Datenbankdienst mit pgvector-Erweiterung
+  # PostgreSQL-Datenbankdienst
   postgres-db:
-    image: ankane/pgvector:latest
+    image: postgres:16
     environment:
       POSTGRES_USER: cockpit_user
       POSTGRES_PASSWORD: cockpit_pass
@@ -30,8 +29,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://cockpit_user:cockpit_pass@postgres-db:5432/security_cockpit
-      - CORS_ORIGINS=["http://localhost:3000"]
+      - SECCENTER_DATABASE_URL=postgresql+asyncpg://cockpit_user:cockpit_pass@postgres-db:5432/security_cockpit
+      - SECCENTER_CORS_ORIGINS=["http://localhost:3000"]
     depends_on:
       postgres-db:
         condition: service_healthy

@@ -1,6 +1,6 @@
 """Datenbank-Repository: alle Datenbankoperationen fuer Sessions und Assets."""
 
-from python_ulid import ULID
+from ulid import ULID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
