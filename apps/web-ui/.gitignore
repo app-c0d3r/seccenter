@@ -1,0 +1,29 @@
+# Abhaengigkeiten
+node_modules
+.pnp
+.pnp.js
+
+# Build-Ausgabe
+dist
+dist-ssr
+build
+
+# Lokale Umgebungsdateien
+*.local
+.env
+.env.*
+!.env.example
+
+# Editor-Verzeichnisse
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript-Cache
+*.tsbuildinfo
