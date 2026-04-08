@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from ulid import ULID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db.models import AssetModel, EnrichmentBatchModel, InternalDomainModel, InternalNetworkModel, SessionModel
 
@@ -35,6 +36,18 @@ async def get_session(
     """Gibt eine Sitzung anhand ihrer ID zurueck oder None."""
     result = await db.execute(
         select(SessionModel).where(SessionModel.id == session_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_session_with_assets(
+    db: AsyncSession, session_id: str
+) -> SessionModel | None:
+    """Get a session with eager-loaded assets (avoids lazy-load outside async context)."""
+    result = await db.execute(
+        select(SessionModel)
+        .where(SessionModel.id == session_id)
+        .options(selectinload(SessionModel.assets))
     )
     return result.scalar_one_or_none()
 

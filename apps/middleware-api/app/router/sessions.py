@@ -37,7 +37,7 @@ async def get_session(
     db: AsyncSession = Depends(get_db),
 ) -> SessionWithAssetsResponse:
     """Get a single session with all its assets (for frontend polling)."""
-    session = await repository.get_session(db, session_id)
+    session = await repository.get_session_with_assets(db, session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
     return SessionWithAssetsResponse.model_validate(session)
