@@ -29,6 +29,7 @@ export interface AnalyzedAsset {
   type: AssetType;
   status: AssetStatus;
   created_at: string;
+  enrichment_data: Record<string, unknown>;
 }
 
 /** Eine Analyse-Session, die mehrere Assets enthalten kann */

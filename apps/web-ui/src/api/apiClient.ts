@@ -42,14 +42,17 @@ export async function listSessions(): Promise<AnalysisSession[]> {
  */
 export async function uploadFile(
   sessionId: string,
-  file: File
+  file: File,
 ): Promise<{ assets: AnalyzedAsset[] }> {
   const formData = new FormData();
   formData.append("file", file);
-  return fetchJson<{ assets: AnalyzedAsset[] }>(`/sessions/${sessionId}/upload`, {
-    method: "POST",
-    body: formData,
-  });
+  return fetchJson<{ assets: AnalyzedAsset[] }>(
+    `/sessions/${sessionId}/upload`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
 }
 
 /**
@@ -58,7 +61,7 @@ export async function uploadFile(
 export async function updateAssetStatus(
   sessionId: string,
   assetId: string,
-  status: AssetStatus
+  status: AssetStatus,
 ): Promise<AnalyzedAsset> {
   return fetchJson<AnalyzedAsset>(`/sessions/${sessionId}/assets/${assetId}`, {
     method: "PATCH",
@@ -67,10 +70,36 @@ export async function updateAssetStatus(
   });
 }
 
+/**
+ * Dispatches selected assets for enrichment via n8n
+ */
+export async function enrichAssets(
+  sessionId: string,
+  assetIds: string[],
+): Promise<{ batch_id: string; asset_count: number }> {
+  return fetchJson<{ batch_id: string; asset_count: number }>(
+    `/sessions/${sessionId}/enrich`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ asset_ids: assetIds }),
+    },
+  );
+}
+
+/**
+ * Fetches a single session with all its assets (used for polling)
+ */
+export async function getSession(sessionId: string): Promise<AnalysisSession> {
+  return fetchJson<AnalysisSession>(`/sessions/${sessionId}`);
+}
+
 /** Gebundeler API-Client als Objekt fuer einfachen Import */
 export const apiClient = {
   createSession,
   listSessions,
   uploadFile,
   updateAssetStatus,
+  enrichAssets,
+  getSession,
 };
