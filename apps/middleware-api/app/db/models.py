@@ -64,6 +64,10 @@ class AssetModel(Base):
     status: Mapped[str] = mapped_column(
         Enum(
             "PENDING",
+            "INTERNAL",
+            "PROCESSING",
+            "ENRICHED",
+            "CRITICAL",
             "CONFIRMED",
             "IGNORED",
             name="asset_status",

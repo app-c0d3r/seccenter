@@ -36,11 +36,13 @@ const columnHelper = createColumnHelper<AnalyzedAsset>();
 export function AssetTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const { activeSessionId, sessions, updateAssetStatus } = useSessionStore((state) => ({
-    activeSessionId: state.activeSessionId,
-    sessions: state.sessions,
-    updateAssetStatus: state.updateAssetStatus,
-  }));
+  const { activeSessionId, sessions, updateAssetStatus } = useSessionStore(
+    (state) => ({
+      activeSessionId: state.activeSessionId,
+      sessions: state.sessions,
+      updateAssetStatus: state.updateAssetStatus,
+    }),
+  );
 
   // Assets der aktiven Session ermitteln
   const assets: AnalyzedAsset[] =
@@ -52,7 +54,7 @@ export function AssetTable() {
   async function handleStatusChange(
     sessionId: string,
     assetId: string,
-    newStatus: AssetStatus
+    newStatus: AssetStatus,
   ) {
     try {
       await apiClient.updateAssetStatus(sessionId, assetId, newStatus);
@@ -85,6 +87,25 @@ export function AssetTable() {
       cell: (info) => {
         const asset = info.row.original;
         const sessionId = activeSessionId ?? "";
+
+        // INTERNAL assets are DLP-blocked and cannot be changed by analysts
+        if (asset.status === "INTERNAL") {
+          return (
+            <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+              INTERNAL
+            </span>
+          );
+        }
+
+        // Non-editable statuses set by the system
+        if (["PROCESSING", "ENRICHED", "CRITICAL"].includes(asset.status)) {
+          return (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+              {asset.status}
+            </span>
+          );
+        }
+
         return (
           <Select
             value={asset.status}
@@ -144,10 +165,17 @@ export function AssetTable() {
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className={header.column.getCanSort() ? "cursor-pointer select-none" : ""}
+                  className={
+                    header.column.getCanSort()
+                      ? "cursor-pointer select-none"
+                      : ""
+                  }
                   onClick={header.column.getToggleSortingHandler()}
                 >
-                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext(),
+                  )}
                   {/* Sortierrichtungs-Indikator */}
                   {header.column.getIsSorted() === "asc" && " ↑"}
                   {header.column.getIsSorted() === "desc" && " ↓"}

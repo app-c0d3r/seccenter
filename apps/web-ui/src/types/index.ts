@@ -12,7 +12,14 @@ export type AssetType =
   | "FILE_HASH_SHA256";
 
 /** Status eines analysierten Assets im Workflow */
-export type AssetStatus = "PENDING" | "CONFIRMED" | "IGNORED";
+export type AssetStatus =
+  | "PENDING"
+  | "INTERNAL"
+  | "PROCESSING"
+  | "ENRICHED"
+  | "CRITICAL"
+  | "CONFIRMED"
+  | "IGNORED";
 
 /** Ein einzelnes analysiertes Asset (IOC) */
 export interface AnalyzedAsset {

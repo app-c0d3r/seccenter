@@ -20,6 +20,10 @@ class AssetStatus(str, Enum):
     """Moegliche Verarbeitungszustaende eines Assets."""
 
     PENDING = "PENDING"
+    INTERNAL = "INTERNAL"
+    PROCESSING = "PROCESSING"
+    ENRICHED = "ENRICHED"
+    CRITICAL = "CRITICAL"
     CONFIRMED = "CONFIRMED"
     IGNORED = "IGNORED"
 
