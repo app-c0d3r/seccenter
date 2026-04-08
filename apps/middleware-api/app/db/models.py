@@ -91,3 +91,35 @@ class AssetModel(Base):
     __table_args__ = (
         Index("idx_assets_session", "session_id"),
     )
+
+
+class InternalNetworkModel(Base):
+    """Database table for internal CIDR blocks (DLP rules)."""
+
+    __tablename__ = "internal_networks"
+
+    id: Mapped[str] = mapped_column(String(26), primary_key=True)
+    cidr: Mapped[str] = mapped_column(String, nullable=False)
+    label: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(
+        "created_at",
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
+class InternalDomainModel(Base):
+    """Database table for internal domains (DLP rules)."""
+
+    __tablename__ = "internal_domains"
+
+    id: Mapped[str] = mapped_column(String(26), primary_key=True)
+    domain: Mapped[str] = mapped_column(String(255), nullable=False)
+    label: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(
+        "created_at",
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )

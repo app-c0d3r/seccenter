@@ -4,7 +4,7 @@ from ulid import ULID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AssetModel, SessionModel
+from app.db.models import AssetModel, InternalDomainModel, InternalNetworkModel, SessionModel
 
 
 async def create_session(db: AsyncSession, name: str) -> SessionModel:
@@ -76,3 +76,67 @@ async def update_asset_status(
     await db.commit()
     await db.refresh(asset)
     return asset
+
+
+async def create_internal_network(
+    db: AsyncSession, network_id: str, cidr: str, label: str | None
+) -> InternalNetworkModel:
+    """Create a new internal network CIDR block."""
+    network = InternalNetworkModel(id=network_id, cidr=cidr, label=label)
+    db.add(network)
+    await db.commit()
+    await db.refresh(network)
+    return network
+
+
+async def list_internal_networks(db: AsyncSession) -> list[InternalNetworkModel]:
+    """List all internal networks ordered by creation date."""
+    result = await db.execute(
+        select(InternalNetworkModel).order_by(InternalNetworkModel.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def delete_internal_network(db: AsyncSession, network_id: str) -> bool:
+    """Delete an internal network. Returns True if deleted, False if not found."""
+    result = await db.execute(
+        select(InternalNetworkModel).where(InternalNetworkModel.id == network_id)
+    )
+    network = result.scalar_one_or_none()
+    if network is None:
+        return False
+    await db.delete(network)
+    await db.commit()
+    return True
+
+
+async def create_internal_domain(
+    db: AsyncSession, domain_id: str, domain: str, label: str | None
+) -> InternalDomainModel:
+    """Create a new internal domain."""
+    entry = InternalDomainModel(id=domain_id, domain=domain, label=label)
+    db.add(entry)
+    await db.commit()
+    await db.refresh(entry)
+    return entry
+
+
+async def list_internal_domains(db: AsyncSession) -> list[InternalDomainModel]:
+    """List all internal domains ordered by creation date."""
+    result = await db.execute(
+        select(InternalDomainModel).order_by(InternalDomainModel.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def delete_internal_domain(db: AsyncSession, domain_id: str) -> bool:
+    """Delete an internal domain. Returns True if deleted, False if not found."""
+    result = await db.execute(
+        select(InternalDomainModel).where(InternalDomainModel.id == domain_id)
+    )
+    entry = result.scalar_one_or_none()
+    if entry is None:
+        return False
+    await db.delete(entry)
+    await db.commit()
+    return True
