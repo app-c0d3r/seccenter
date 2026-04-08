@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.db.connection import engine
-from app.router import sessions, uploads
+from app.router import dlp, sessions, uploads
 
 
 @asynccontextmanager
@@ -38,6 +38,7 @@ app.add_middleware(
 # Router registrieren
 app.include_router(sessions.router)
 app.include_router(uploads.router)
+app.include_router(dlp.router)
 
 
 @app.get("/api/health", tags=["health"])

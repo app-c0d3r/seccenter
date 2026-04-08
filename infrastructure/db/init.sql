@@ -43,9 +43,10 @@ CREATE TABLE assets (
 CREATE INDEX idx_assets_session ON assets(session_id);
 
 -- DLP: Interne Netzwerke (CIDR-Bloecke)
+-- cidr stored as TEXT; format is validated by Pydantic (IPvAnyNetwork) before DB insert
 CREATE TABLE internal_networks (
     id         CHAR(26)     PRIMARY KEY,
-    cidr       CIDR         NOT NULL,
+    cidr       TEXT         NOT NULL,
     label      VARCHAR(255),
     created_at TIMESTAMPTZ  DEFAULT NOW()
 );
