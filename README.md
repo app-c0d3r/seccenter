@@ -9,7 +9,6 @@ Projekt zur Verwaltung und Überwachung von Sicherheitszentren.
 
 ## Entwicklung
 
-Bitte beachte die Richtlinien in `CLAUDE.md` für Coding-Standards und Workflows.
 
 ## Installation und Start
 

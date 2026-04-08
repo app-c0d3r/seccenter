@@ -23,3 +23,9 @@ coverage/
 *.cert
 .idea/
 .vscode/settings.json
+
+# project folder
+.claude/*
+.env
+settings.json
+CLAUDE.md

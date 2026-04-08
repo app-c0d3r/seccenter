@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_USER: cockpit_user
+      POSTGRES_PASSWORD: cockpit_password
+      POSTGRES_DB: security_cockpit
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - cockpit-net
+
+  graph-db:
+    image: falkordb/falkordb:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - graph_data:/data
+    networks:
+      - cockpit-net
+
+  n8n-orchestrator:
+    image: docker.n8n.io/n8nio/n8n
+    environment:
+      - N8N_HOST=n8n-orchestrator
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./infrastructure/n8n-workflows:/data/workflows # IaC Import
+    networks:
+      - cockpit-net
+
+  middleware-api:
+    build: ./apps/middleware-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres-db
+      - GRAPH_HOST=graph-db
+    depends_on:
+      - postgres-db
+      - graph-db
+    networks:
+      - cockpit-net
+
+  web-ui:
+    build: ./apps/web-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - cockpit-net
+
+networks:
+  cockpit-net:
+    driver: bridge
+
+volumes:
+  pg_data:
+  graph_data:
+  n8n_data:

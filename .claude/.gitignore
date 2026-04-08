@@ -1,1 +1,6 @@
 settings.local.json
+# project folder
+.claude/
+.env
+settings.json
+CLAUDE.md
