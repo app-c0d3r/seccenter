@@ -37,6 +37,7 @@ class AssetResponse(BaseModel):
     type: AssetType
     status: AssetStatus
     created_at: datetime
+    enrichment_data: dict = {}
 
     model_config = {"from_attributes": True}
 
