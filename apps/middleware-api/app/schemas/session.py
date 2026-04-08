@@ -19,3 +19,17 @@ class SessionResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+from app.schemas.asset import AssetResponse
+
+
+class SessionWithAssetsResponse(BaseModel):
+    """Response schema for a session with its assets."""
+
+    id: str
+    name: str
+    assets: list[AssetResponse] = []
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

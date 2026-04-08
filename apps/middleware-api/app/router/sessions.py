@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.connection import get_db
 from app.db import repository
 from app.schemas.asset import AssetResponse, AssetStatusUpdate
-from app.schemas.session import SessionCreate, SessionResponse
+from app.schemas.session import SessionCreate, SessionResponse, SessionWithAssetsResponse
 
 # Router mit Praefix und Tag fuer API-Dokumentation
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
@@ -29,6 +29,18 @@ async def list_sessions(
     """Gibt alle Sitzungen absteigend nach Erstellungsdatum zurueck."""
     sessions = await repository.list_sessions(db)
     return [SessionResponse.model_validate(s) for s in sessions]
+
+
+@router.get("/{session_id}", response_model=SessionWithAssetsResponse)
+async def get_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> SessionWithAssetsResponse:
+    """Get a single session with all its assets (for frontend polling)."""
+    session = await repository.get_session(db, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return SessionWithAssetsResponse.model_validate(session)
 
 
 @router.patch("/{session_id}/assets/{asset_id}", response_model=AssetResponse)
