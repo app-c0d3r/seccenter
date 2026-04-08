@@ -1,66 +1,60 @@
+# Docker Compose Konfiguration fuer SECCENTER Phase 1
+# Enthaelt drei Dienste: Datenbank, API-Middleware, Web-Oberflaeche
+
 version: '3.8'
 
 services:
+  # PostgreSQL-Datenbankdienst mit pgvector-Erweiterung
   postgres-db:
     image: ankane/pgvector:latest
     environment:
       POSTGRES_USER: cockpit_user
-      POSTGRES_PASSWORD: cockpit_password
+      POSTGRES_PASSWORD: cockpit_pass
       POSTGRES_DB: security_cockpit
     volumes:
       - pg_data:/var/lib/postgresql/data
-    networks:
-      - cockpit-net
-
-  graph-db:
-    image: falkordb/falkordb:latest
+      - ./infrastructure/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "6379:6379"
-    volumes:
-      - graph_data:/data
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cockpit_user -d security_cockpit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - cockpit-net
 
-  n8n-orchestrator:
-    image: docker.n8n.io/n8nio/n8n
-    environment:
-      - N8N_HOST=n8n-orchestrator
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - NODE_ENV=production
-    volumes:
-      - n8n_data:/home/node/.n8n
-      - ./infrastructure/n8n-workflows:/data/workflows # IaC Import
-    networks:
-      - cockpit-net
-
+  # Python-Middleware API (FastAPI)
   middleware-api:
     build: ./apps/middleware-api
     ports:
       - "8000:8000"
     environment:
-      - DB_HOST=postgres-db
-      - GRAPH_HOST=graph-db
+      - DATABASE_URL=postgresql+asyncpg://cockpit_user:cockpit_pass@postgres-db:5432/security_cockpit
+      - CORS_ORIGINS=["http://localhost:3000"]
     depends_on:
-      - postgres-db
-      - graph-db
+      postgres-db:
+        condition: service_healthy
     networks:
       - cockpit-net
 
+  # React Web-Oberflaeche
   web-ui:
     build: ./apps/web-ui
     ports:
       - "3000:3000"
     environment:
       - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - middleware-api
     networks:
       - cockpit-net
 
+# Netzwerk fuer die interne Kommunikation der Dienste
 networks:
   cockpit-net:
     driver: bridge
 
+# Persistente Volumes fuer Datenbankdaten
 volumes:
   pg_data:
-  graph_data:
-  n8n_data:
