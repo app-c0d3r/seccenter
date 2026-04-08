@@ -1,10 +1,12 @@
 """Datenbank-Repository: alle Datenbankoperationen fuer Sessions und Assets."""
 
+from datetime import datetime, timezone
+
 from ulid import ULID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AssetModel, InternalDomainModel, InternalNetworkModel, SessionModel
+from app.db.models import AssetModel, EnrichmentBatchModel, InternalDomainModel, InternalNetworkModel, SessionModel
 
 
 async def create_session(db: AsyncSession, name: str) -> SessionModel:
@@ -140,3 +142,101 @@ async def delete_internal_domain(db: AsyncSession, domain_id: str) -> bool:
     await db.delete(entry)
     await db.commit()
     return True
+
+
+async def create_enrichment_batch(
+    db: AsyncSession, batch_id: str, session_id: str, asset_ids: list[str]
+) -> EnrichmentBatchModel:
+    """Create a new enrichment batch record."""
+    batch = EnrichmentBatchModel(
+        id=batch_id, session_id=session_id, asset_ids=asset_ids
+    )
+    db.add(batch)
+    await db.commit()
+    await db.refresh(batch)
+    return batch
+
+
+async def get_enrichment_batch(
+    db: AsyncSession, batch_id: str
+) -> EnrichmentBatchModel | None:
+    """Get an enrichment batch by ID."""
+    result = await db.execute(
+        select(EnrichmentBatchModel).where(EnrichmentBatchModel.id == batch_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def update_batch_status(
+    db: AsyncSession, batch_id: str, status: str
+) -> None:
+    """Update batch status and set completed_at if terminal."""
+    result = await db.execute(
+        select(EnrichmentBatchModel).where(EnrichmentBatchModel.id == batch_id)
+    )
+    batch = result.scalar_one_or_none()
+    if batch:
+        batch.status = status
+        if status in ("COMPLETED", "PARTIAL", "FAILED"):
+            batch.completed_at = datetime.now(timezone.utc)
+        await db.commit()
+
+
+async def bulk_mark_assets_processing(
+    db: AsyncSession, asset_ids: list[str]
+) -> None:
+    """Mark multiple assets as PROCESSING in one transaction."""
+    for asset_id in asset_ids:
+        result = await db.execute(
+            select(AssetModel).where(AssetModel.id == asset_id)
+        )
+        asset = result.scalar_one_or_none()
+        if asset:
+            asset.status = "PROCESSING"
+    await db.commit()
+
+
+async def bulk_revert_assets_to_pending(
+    db: AsyncSession, asset_ids: list[str]
+) -> None:
+    """Revert assets from PROCESSING back to PENDING (compensating transaction)."""
+    for asset_id in asset_ids:
+        result = await db.execute(
+            select(AssetModel).where(
+                AssetModel.id == asset_id,
+            )
+        )
+        asset = result.scalar_one_or_none()
+        if asset and asset.status == "PROCESSING":
+            asset.status = "PENDING"
+    await db.commit()
+
+
+async def update_asset_enrichment(
+    db: AsyncSession, asset_id: str, status: str, enrichment_data: dict
+) -> bool:
+    """Update asset status and enrichment data. Only updates if currently PROCESSING."""
+    result = await db.execute(
+        select(AssetModel).where(
+            AssetModel.id == asset_id,
+        )
+    )
+    asset = result.scalar_one_or_none()
+    if asset and asset.status == "PROCESSING":
+        asset.status = status
+        asset.enrichment_data = enrichment_data
+        return True
+    return False
+
+
+async def get_assets_by_ids(
+    db: AsyncSession, session_id: str, asset_ids: list[str]
+) -> list[AssetModel]:
+    """Get assets by IDs within a session."""
+    result = await db.execute(
+        select(AssetModel).where(
+            AssetModel.session_id == session_id,
+            AssetModel.id.in_(asset_ids),
+        )
+    )
+    return list(result.scalars().all())
