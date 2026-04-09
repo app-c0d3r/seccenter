@@ -5,6 +5,8 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import type { AnalysisSession, AnalyzedAsset, AssetStatus } from "@/types";
+import type { ChatMessage, ReportDraft } from "@/types/agent";
+import { EMPTY_REPORT_DRAFT } from "@/types/agent";
 
 /** Zustand-Interface des Session-Stores */
 interface SessionState {
@@ -28,6 +30,28 @@ interface SessionState {
   markAssetsProcessing: (sessionId: string, assetIds: string[]) => void;
   /** Replace all assets for a session (polling sync from backend) */
   refreshSessionAssets: (sessionId: string, assets: AnalyzedAsset[]) => void;
+
+  /** Chat messages per session */
+  chatMessages: Record<string, ChatMessage[]>;
+  /** Report draft per session */
+  reportDraft: Record<string, ReportDraft>;
+  /** Whether the agent is currently streaming */
+  agentStreaming: boolean;
+
+  /** Add a chat message to a session */
+  addChatMessage: (sessionId: string, message: ChatMessage) => void;
+  /** Append content to the last assistant message (for streaming tokens) */
+  appendToLastAssistantMessage: (sessionId: string, content: string) => void;
+  /** Set the full report draft for a session */
+  setReportDraft: (sessionId: string, draft: ReportDraft) => void;
+  /** Patch a single report section */
+  patchReportSection: (
+    sessionId: string,
+    section: string,
+    content: Record<string, unknown>,
+  ) => void;
+  /** Set the agent streaming state */
+  setAgentStreaming: (streaming: boolean) => void;
 }
 
 /** Globaler Zustand-Store fuer Sessions */
@@ -83,6 +107,48 @@ export const useSessionStore = create<SessionState>()(
         if (session) {
           session.assets = assets;
         }
+      }),
+
+    chatMessages: {},
+    reportDraft: {},
+    agentStreaming: false,
+
+    addChatMessage: (sessionId, message) =>
+      set((state) => {
+        if (!state.chatMessages[sessionId]) {
+          state.chatMessages[sessionId] = [];
+        }
+        state.chatMessages[sessionId].push(message);
+      }),
+
+    appendToLastAssistantMessage: (sessionId, content) =>
+      set((state) => {
+        const messages = state.chatMessages[sessionId];
+        if (messages && messages.length > 0) {
+          const last = messages[messages.length - 1];
+          if (last.role === "assistant") {
+            last.content += content;
+          }
+        }
+      }),
+
+    setReportDraft: (sessionId, draft) =>
+      set((state) => {
+        state.reportDraft[sessionId] = draft;
+      }),
+
+    patchReportSection: (sessionId, section, content) =>
+      set((state) => {
+        if (!state.reportDraft[sessionId]) {
+          state.reportDraft[sessionId] = { ...EMPTY_REPORT_DRAFT };
+        }
+        (state.reportDraft[sessionId] as Record<string, unknown>)[section] =
+          content;
+      }),
+
+    setAgentStreaming: (streaming) =>
+      set((state) => {
+        state.agentStreaming = streaming;
       }),
   })),
 );
