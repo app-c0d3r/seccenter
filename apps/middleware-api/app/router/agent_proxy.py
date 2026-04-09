@@ -5,6 +5,7 @@ import json
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -159,6 +160,63 @@ async def stream_analysis(
     }
 
     agent_url = f"{settings.agent_url}/api/agent/analyze"
+
+    return StreamingResponse(
+        _proxy_agent_stream(agent_url, payload, masking_ctx),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+class ChatProxyRequest(BaseModel):
+    """Request body for Layer 2 conversational refinement."""
+
+    message: str
+    report_draft: dict = {"header": {}, "body": {}, "foot": {}}
+
+
+@router.post("/{session_id}/agent/chat")
+async def chat_with_agent(
+    session_id: str,
+    body: ChatProxyRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Layer 2: Conversational refinement via SSE stream.
+
+    Same DLP masking flow as Layer 1, plus masking of the user message
+    and the current report draft before forwarding to the agent.
+    """
+    session = await get_session_with_assets(db, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Build DLP masking context
+    masking_ctx = DLPMaskingContext(session.assets)
+
+    # Mask session context
+    context = _build_session_context(session, session.assets)
+    masked_context_str = masking_ctx.mask(json.dumps(context))
+    masked_context = json.loads(masked_context_str)
+
+    # Mask user message and report draft
+    masked_message = masking_ctx.mask(body.message)
+    masked_draft_str = masking_ctx.mask(json.dumps(body.report_draft))
+    masked_draft = json.loads(masked_draft_str)
+
+    # Build payload for agent chat endpoint
+    payload = {
+        "session_id": session_id,
+        "session_context": masked_context,
+        "messages": [],
+        "report_draft": masked_draft,
+        "user_message": masked_message,
+    }
+
+    agent_url = f"{settings.agent_url}/api/agent/chat"
 
     return StreamingResponse(
         _proxy_agent_stream(agent_url, payload, masking_ctx),
