@@ -1,66 +1,99 @@
-version: '3.8'
+# Docker Compose Konfiguration fuer SECCENTER Phase 3
+# Contains five services: Database, API-Middleware, Web-UI, n8n Orchestrator, AI Agent
+
 
 services:
+  # PostgreSQL-Datenbankdienst
   postgres-db:
-    image: ankane/pgvector:latest
+    image: postgres:16
     environment:
       POSTGRES_USER: cockpit_user
-      POSTGRES_PASSWORD: cockpit_password
+      POSTGRES_PASSWORD: cockpit_pass
       POSTGRES_DB: security_cockpit
     volumes:
       - pg_data:/var/lib/postgresql/data
-    networks:
-      - cockpit-net
-
-  graph-db:
-    image: falkordb/falkordb:latest
+      - ./infrastructure/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "6379:6379"
-    volumes:
-      - graph_data:/data
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cockpit_user -d security_cockpit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - cockpit-net
 
-  n8n-orchestrator:
-    image: docker.n8n.io/n8nio/n8n
-    environment:
-      - N8N_HOST=n8n-orchestrator
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - NODE_ENV=production
-    volumes:
-      - n8n_data:/home/node/.n8n
-      - ./infrastructure/n8n-workflows:/data/workflows # IaC Import
-    networks:
-      - cockpit-net
-
+  # Python-Middleware API (FastAPI)
   middleware-api:
     build: ./apps/middleware-api
     ports:
       - "8000:8000"
     environment:
-      - DB_HOST=postgres-db
-      - GRAPH_HOST=graph-db
+      - SECCENTER_DATABASE_URL=postgresql+asyncpg://cockpit_user:cockpit_pass@postgres-db:5432/security_cockpit
+      - SECCENTER_CORS_ORIGINS=["http://localhost:3000"]
+      - SECCENTER_N8N_WEBHOOK_URL=http://n8n-orchestrator:5678/webhook/enrich
+      - SECCENTER_MIDDLEWARE_INTERNAL_URL=http://middleware-api:8000
+      - SECCENTER_AGENT_URL=http://ai-agent:8001
     depends_on:
-      - postgres-db
-      - graph-db
+      postgres-db:
+        condition: service_healthy
     networks:
       - cockpit-net
 
+  # React Web-Oberflaeche
   web-ui:
     build: ./apps/web-ui
     ports:
       - "3000:3000"
     environment:
       - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - middleware-api
     networks:
       - cockpit-net
 
+  # n8n Workflow Orchestrator for threat intelligence enrichment
+  n8n-orchestrator:
+    image: n8nio/n8n:1.94.1
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://n8n-orchestrator:5678/
+      - N8N_USER_FOLDER=/home/node/.n8n
+      - VT_API_KEY=${VT_API_KEY:-}
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./infrastructure/n8n/workflows:/home/node/.n8n/workflows
+    depends_on:
+      - middleware-api
+    networks:
+      - cockpit-net
+
+  # LangGraph AI Agent for threat analysis and report generation
+  ai-agent:
+    build: ./apps/agent
+    ports:
+      - "8001:8001"
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
+      - LLM_MODEL=${LLM_MODEL:-anthropic/claude-sonnet-4-20250514}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-}
+    depends_on:
+      - middleware-api
+    networks:
+      - cockpit-net
+
+# Netzwerk fuer die interne Kommunikation der Dienste
 networks:
   cockpit-net:
     driver: bridge
 
+# Persistente Volumes fuer Datenbankdaten
 volumes:
   pg_data:
-  graph_data:
   n8n_data:
