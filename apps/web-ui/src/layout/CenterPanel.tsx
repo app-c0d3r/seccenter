@@ -1,19 +1,16 @@
 /**
- * Mittleres Panel: Datei-Upload und AI-Chat Platzhalter
+ * Center panel: file upload and AI chat
  */
 import { UploadZone } from "@/components/UploadZone";
+import { ChatPanel } from "@/components/ChatPanel";
 
-/** Mittleres Panel mit Upload-Bereich und Chat-Platzhalter */
 export function CenterPanel() {
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
-      {/* Datei-Upload-Bereich */}
-      <UploadZone />
-
-      {/* AI-Chat Platzhalter fuer Phase 2 */}
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 p-8">
-        <p className="text-sm text-muted-foreground">AI Chat — Phase 2</p>
+    <div className="flex h-full flex-col overflow-hidden p-4">
+      <div className="shrink-0">
+        <UploadZone />
       </div>
+      <ChatPanel />
     </div>
   );
 }
