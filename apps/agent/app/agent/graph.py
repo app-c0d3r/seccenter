@@ -13,14 +13,25 @@ from app.agent.tools import generate_report, update_report_section
 from app.core.config import settings
 from app.core.llm_factory import create_llm
 
-# Create LLM and bind tools
+# Tool list (no LLM dependency)
 agent_tools = [generate_report, update_report_section]
-llm = create_llm(settings)
-llm_with_tools = llm.bind_tools(agent_tools)
+
+# Lazy-initialized LLM (avoids crash at import time when no API key is set)
+_llm_with_tools = None
+
+
+def _get_llm_with_tools():
+    """Create LLM on first use, not at import time."""
+    global _llm_with_tools
+    if _llm_with_tools is None:
+        llm = create_llm(settings)
+        _llm_with_tools = llm.bind_tools(agent_tools)
+    return _llm_with_tools
 
 
 async def agent_node(state: AnalystAgentState) -> dict:
     """Invoke the LLM with the current message history."""
+    llm_with_tools = _get_llm_with_tools()
     response = await llm_with_tools.ainvoke(state["messages"])
     return {"messages": [response]}
 
