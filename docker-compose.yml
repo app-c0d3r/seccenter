@@ -1,5 +1,5 @@
-# Docker Compose Konfiguration fuer SECCENTER Phase 2B
-# Contains four services: Database, API-Middleware, Web-UI, n8n Orchestrator
+# Docker Compose Konfiguration fuer SECCENTER Phase 3
+# Contains five services: Database, API-Middleware, Web-UI, n8n Orchestrator, AI Agent
 
 
 services:
@@ -33,6 +33,7 @@ services:
       - SECCENTER_CORS_ORIGINS=["http://localhost:3000"]
       - SECCENTER_N8N_WEBHOOK_URL=http://n8n-orchestrator:5678/webhook/enrich
       - SECCENTER_MIDDLEWARE_INTERNAL_URL=http://middleware-api:8000
+      - SECCENTER_AGENT_URL=http://ai-agent:8001
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -67,6 +68,21 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./infrastructure/n8n/workflows:/home/node/.n8n/workflows
+    depends_on:
+      - middleware-api
+    networks:
+      - cockpit-net
+
+  # LangGraph AI Agent for threat analysis and report generation
+  ai-agent:
+    build: ./apps/agent
+    ports:
+      - "8001:8001"
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
+      - LLM_MODEL=${LLM_MODEL:-anthropic/claude-sonnet-4-20250514}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-}
     depends_on:
       - middleware-api
     networks:

@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # Internal URL of this middleware (for callback_url in n8n payload)
     middleware_internal_url: str = "http://middleware-api:8000"
 
+    # AI agent service URL (internal network)
+    agent_url: str = "http://ai-agent:8001"
+
     model_config = {"env_prefix": "SECCENTER_", "env_file": ".env"}
 
 
